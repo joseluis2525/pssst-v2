@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Pssst - ZX Spectrum</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: Arial, sans-serif; background: #050505; color: #fff;
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; overflow-x: hidden; touch-action: none;
+            user-select: none; -webkit-user-select: none;
         }
         #game-header { width: 100%; max-width: 600px; text-align: center; padding: 5px; background: #111; border-bottom: 2px solid #4caf50; }
         #game-header h1 { font-size: 1.1em; color: #4caf50; margin: 0; }
@@ -19,91 +20,103 @@
             display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;
             padding: 6px 5px; background: #0a0a14;
         }
-        .game-btn {
-            background: #222; border: 2px solid #555; color: #ccc;
-            padding: 8px 14px; border-radius: 6px; font-size: 0.85em;
-            cursor: pointer; user-select: none; font-weight: bold;
-        }
-        .game-btn.active { background: #4caf50; color: #000; border-color: #4caf50; }
-        .game-btn:active { background: #2e7d32; }
-
         .upload-btn {
             display: inline-block; background: #333; border: 1px solid #4caf50;
-            padding: 6px 15px; border-radius: 5px; font-size: 0.8em; color: #4caf50; margin: 3px;
+            padding: 6px 15px; border-radius: 5px; font-size: 0.8em; color: #4caf50;
             cursor: pointer; user-select: none;
         }
-        .upload-btn:active { background: #4caf50; color: #000; }
         #manual-load { display: none; }
 
         #emulator-container {
             width: 100%; max-width: 600px; background: #000; padding: 2px;
-            margin-bottom: 5px;
         }
-        #jsspeccy { width: 100%; aspect-ratio: 4/3; border: 2px solid #333; }
+        #jsspeccy { width: 100%; aspect-ratio: 4/3; border: 2px solid #333; position: relative; }
         #jsspeccy canvas { width: 100% !important; height: 100% !important; image-rendering: pixelated; outline: none; }
+
+        /* Input invisible para capturar teclado del sistema si hace falta */
+        #hidden-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            width: 1px; height: 1px;
+            left: -9999px;
+        }
 
         #gamepad-area {
             width: 100%; max-width: 600px; background: #1a1a2e;
-            border-radius: 8px; padding: 10px; border: 1px solid #333;
+            padding: 10px; border: 1px solid #333;
         }
-        .menu-keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 15px; }
-        .menu-keys .btn { height: 40px; font-size: 1em; background: #2a2a3e; border: 1px solid #555; }
-        .game-controls { display: flex; justify-content: space-around; align-items: center; }
-        .d-pad { display: grid; grid-template-columns: 60px 60px 60px; grid-template-rows: 60px 60px; gap: 5px; }
+
+        .dpad-layout {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .dpad-col-left, .dpad-col-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
         .btn {
-            background: #333; border: 2px solid #555; border-radius: 8px; color: #fff;
-            display: flex; justify-content: center; align-items: center; font-size: 1.2em;
-            user-select: none; -webkit-user-select: none; font-weight: bold; cursor: pointer;
+            background-color: #333;
+            border: 2px solid #555;
+            border-radius: 50%;
+            width: 70px; height: 70px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 0.85em; font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            touch-action: manipulation;
+            user-select: none; -webkit-user-select: none;
         }
-        .btn:active, .btn.active { background: #4caf50 !important; color: #000 !important; }
-        #btn-up { grid-column: 2; grid-row: 1; }
-        #btn-left { grid-column: 1; grid-row: 2; }
-        #btn-down { grid-column: 2; grid-row: 2; }
-        #btn-right { grid-column: 3; grid-row: 2; }
-        .btn-action { width: 80px; height: 80px; border-radius: 50%; background: #a93226; border: 3px solid #e6b0aa; }
+        .btn:active, .btn.active { background-color: #4caf50 !important; color: #000 !important; }
+
+        .btn-action {
+            width: 90px; height: 90px;
+            background: #a93226;
+            border: 3px solid #e6b0aa;
+        }
         .btn-action:active, .btn-action.active { background: #4caf50 !important; }
-        #btn-up { background-image: url('up.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
-        #btn-down { background-image: url('dwn.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
-        #btn-left { background-image: url('lft.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
-        #btn-right { background-image: url('rgt.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
     </style>
 </head>
 <body>
 
     <div id="game-header">
-        <h1 id="game-title">Pssst</h1>
+        <h1>🐛 Pssst</h1>
         <div id="status">Iniciando emulador...</div>
     </div>
 
     <div class="game-selector">
         <label for="manual-load" class="upload-btn">📂 ROM manual</label>
-        <span id="btn-retry" class="upload-btn">▶ Reintentar LOAD ""</span>
         <input type="file" id="manual-load" accept=".tap">
     </div>
 
     <div id="emulator-container">
-        <div id="jsspeccy"></div>
+        <div id="jsspeccy">
+            <input type="text" id="hidden-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
     </div>
 
     <div id="gamepad-area">
-        <div class="menu-keys">
-            <div class="btn" data-key="1">1</div>
-            <div class="btn" data-key="2">2</div>
-            <div class="btn" data-key="3">3</div>
-            <div class="btn" data-key="4">4</div>
-            <div class="btn" data-key="5">5</div>
-            <div class="btn" data-key="Enter">ENT</div>
-        </div>
-        <div class="game-controls">
-            <div class="d-pad">
-                <!-- Teclas corregidas: Q=arriba, A=abajo, O=izquierda, P=derecha -->
-                <div id="btn-up" class="btn" data-key="r">↑</div>
-                <div id="btn-left" class="btn" data-key="q">←</div>
-                <div id="btn-down" class="btn" data-key="e">↓</div>
-                <div id="btn-right" class="btn" data-key="w">→</div>
+        <div class="dpad-layout">
+            <!-- IZQUIERDA: O (izq) y P (der) -->
+            <div class="dpad-col-left">
+                <div class="btn" data-key="o">←</div>
+                <div class="btn" data-key="p">→</div>
             </div>
-            <!-- Disparo = Space -->
-            <div id="btn-jump" class="btn btn-action" data-key="Space">DISPARO</div>
+
+            <!-- CENTRO: DISPARO -->
+            <div id="btn-jump" class="btn btn-action" data-key="Space">FUEGO</div>
+
+            <!-- DERECHA: Q (arriba) y A (abajo) -->
+            <div class="dpad-col-right">
+                <div class="btn" data-key="q">↑</div>
+                <div class="btn" data-key="a">↓</div>
+            </div>
         </div>
     </div>
 
@@ -113,7 +126,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const statusEl = document.getElementById('status');
             const manualLoadInput = document.getElementById('manual-load');
-            const btnRetry = document.getElementById('btn-retry');
+            const hiddenInput = document.getElementById('hidden-input');
 
             let tapeLoaded = false;
             let typing = false;
@@ -136,7 +149,6 @@
             }
 
             async function loadTape(blob, filename) {
-                console.log('[TAPE] Cargando:', filename, blob.size, 'bytes');
                 try {
                     const file = new File([blob], filename, { type: 'application/octet-stream' });
                     const dt = new DataTransfer();
@@ -149,10 +161,9 @@
                     if (canvas) canvas.dispatchEvent(dropEvent);
                     document.dispatchEvent(dropEvent);
                     tapeLoaded = true;
-                    setStatus('✅ Cinta insertada: ' + filename);
+                    setStatus('✅ Cinta insertada');
                     return true;
                 } catch (err) {
-                    console.error('[TAPE ERROR]', err);
                     setStatus('❌ Error: ' + err.message);
                     return false;
                 }
@@ -176,9 +187,11 @@
 
                 canvas.dispatchEvent(down);
                 document.dispatchEvent(down);
+                window.dispatchEvent(down);
                 setTimeout(() => {
                     canvas.dispatchEvent(up);
                     document.dispatchEvent(up);
+                    window.dispatchEvent(up);
                 }, 60);
             }
 
@@ -194,10 +207,8 @@
                 canvas.dispatchEvent(ssDown);
                 document.dispatchEvent(ssDown);
                 await sleep(120);
-
                 pressKey(letter, code, keyCode, { ctrlKey: true });
                 await sleep(150);
-
                 const ssUp = new KeyboardEvent('keyup', {
                     key: 'Control', code: 'ControlLeft', keyCode: 17, which: 17,
                     ctrlKey: false, bubbles: true, cancelable: true
@@ -213,12 +224,10 @@
                 if (typing) return;
                 typing = true;
                 setStatus('⌨️ Escribiendo LOAD ""...');
-
                 const canvas = getCanvas();
                 if (!canvas) { typing = false; return; }
                 canvas.focus();
                 await sleep(500);
-
                 pressKey('Enter', 'Enter', 13);
                 await sleep(400);
                 pressKey('j', 'KeyJ', 74);
@@ -228,7 +237,6 @@
                 await pressSymbolShift('p', 'KeyP', 80);
                 await sleep(300);
                 pressKey('Enter', 'Enter', 13);
-
                 setStatus('▶ LOAD "" enviado. Espera a que cargue...');
                 typing = false;
             }
@@ -239,7 +247,6 @@
                 }
                 tapeLoaded = false;
                 await sleep(1500);
-
                 setStatus('Descargando pssst.tap...');
                 try {
                     const r = await fetch('pssst.tap?t=' + Date.now());
@@ -249,7 +256,6 @@
                     await sleep(2000);
                     await typeLoadCommand();
                 } catch (err) {
-                    console.error('[FETCH]', err);
                     setStatus('❌ Error: ' + err.message);
                 }
             }
@@ -259,12 +265,16 @@
                 tries++;
                 if (getCanvas()) {
                     clearInterval(interval);
+                    // Añadir tabindex al canvas para que pueda recibir foco
+                    const c = getCanvas();
+                    if (c) {
+                        c.setAttribute('tabindex', '0');
+                        c.addEventListener('click', () => c.focus());
+                        c.addEventListener('touchstart', () => c.focus(), { passive: true });
+                    }
                     setTimeout(() => loadGame(), 800);
                 }
-                if (tries > 50) {
-                    clearInterval(interval);
-                    setStatus('⚠️ Canvas no detectado.');
-                }
+                if (tries > 50) { clearInterval(interval); setStatus('⚠️ Canvas no detectado.'); }
             }, 200);
 
             manualLoadInput.addEventListener('change', async function(event) {
@@ -277,46 +287,52 @@
                 await typeLoadCommand();
             });
 
-            btnRetry.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (typing) return;
-                if (!tapeLoaded) {
-                    setStatus('Cinta no cargada. Espera o usa carga manual.');
-                    return;
-                }
-                typeLoadCommand();
-            });
-
             // ============================================================
-            // MAPEO DE TECLAS DE PSSST (CORREGIDO)
-            // O = izquierda, P = derecha, Q = arriba, A = abajo
-            // Space = disparar, Caps Shift = pausa
+            // MAPEO DE TECLAS DE PSSST
+            // O=izq, P=der, Q=arriba, A=abajo, Space=fuego
             // ============================================================
             const keyMap = {
-                '1':'1', '2':'2', '3':'3', '4':'4', '5':'5',
-                'q':'q', 'w':'w', 'r':'r', 'e':'e',
-                'Space':' ', 'Enter':'Enter'
+                'o': { key: 'o', code: 'KeyO', keyCode: 79 },
+                'p': { key: 'p', code: 'KeyP', keyCode: 80 },
+                'q': { key: 'q', code: 'KeyQ', keyCode: 81 },
+                'a': { key: 'a', code: 'KeyA', keyCode: 65 },
+                'Space': { key: ' ', code: 'Space', keyCode: 32 },
+                'CapsShift': { key: 'Shift', code: 'ShiftLeft', keyCode: 16 }
             };
 
-            function sendGamepadKey(key, isDown) {
+            function sendGamepadKey(keyName, isDown) {
                 const canvas = getCanvas();
                 if (!canvas) return;
                 canvas.focus();
-                const actualKey = keyMap[key] || key;
-                let keyCode = actualKey.charCodeAt(0);
-                if (key === 'Enter') keyCode = 13;
-                if (key === 'Space' || actualKey === ' ') keyCode = 32;
+                // Intentar foco también en hidden input por si ayuda
+                if (hiddenInput) { try { hiddenInput.focus(); } catch(e) {} }
+                const c = getCanvas();
+                if (c) c.focus();
 
-                const evt = new KeyboardEvent(isDown ? 'keydown' : 'keyup', {
-                    key: actualKey,
-                    code: key === 'Space' ? 'Space' : (key === 'Enter' ? 'Enter' : 'Key' + actualKey.toUpperCase()),
-                    keyCode: keyCode, which: keyCode,
-                    bubbles: true, cancelable: true
+                const info = keyMap[keyName];
+                if (!info) {
+                    console.warn('[KEY] No keyMap para', keyName);
+                    return;
+                }
+                console.log('[KEY]', keyName, isDown ? 'DOWN' : 'UP', 'keyCode=' + info.keyCode);
+
+                const eventType = isDown ? 'keydown' : 'keyup';
+                const evt = new KeyboardEvent(eventType, {
+                    key: info.key,
+                    code: info.code,
+                    keyCode: info.keyCode,
+                    which: info.keyCode,
+                    bubbles: true,
+                    cancelable: true
                 });
-                Object.defineProperty(evt, 'keyCode', { get: () => keyCode });
-                Object.defineProperty(evt, 'which', { get: () => keyCode });
-                canvas.dispatchEvent(evt);
+                Object.defineProperty(evt, 'keyCode', { get: () => info.keyCode });
+                Object.defineProperty(evt, 'which', { get: () => info.keyCode });
+
+                // Enviar a TODOS los destinos posibles
+                const target = getCanvas();
+                if (target) target.dispatchEvent(evt);
+                document.dispatchEvent(evt);
+                window.dispatchEvent(evt);
             }
 
             document.querySelectorAll('.btn').forEach(btn => {
