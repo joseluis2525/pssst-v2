@@ -147,20 +147,20 @@
 
         <!-- Direcciones + disparo -->
         <div class="dpad-layout">
-            <!-- IZQUIERDA: O (izq) y P (der) -->
-            <div class="dpad-col">
-                <div class="btn-dir" data-key="o">←</div>
-                <div class="btn-dir" data-key="p">→</div>
-            </div>
+           <!-- IZQUIERDA: Q (izq) y W (der) -->
+<div class="dpad-col">
+    <div class="btn-dir" data-key="q">←</div>
+    <div class="btn-dir" data-key="w">→</div>
+</div>
 
-            <!-- CENTRO: FUEGO (Space) -->
-            <div class="btn-fire" data-key="Space">FUEGO</div>
+<!-- CENTRO: FUEGO (T) -->
+<div class="btn-fire" data-key="t">FUEGO</div>
 
-            <!-- DERECHA: Q (arriba) y A (abajo) -->
-            <div class="dpad-col">
-                <div class="btn-dir" data-key="q">↑</div>
-                <div class="btn-dir" data-key="a">↓</div>
-            </div>
+<!-- DERECHA: E (arriba) y R (abajo) -->
+<div class="dpad-col">
+    <div class="btn-dir" data-key="e">↑</div>
+    <div class="btn-dir" data-key="r">↓</div>
+</div>
         </div>
 
     </div>
@@ -338,19 +338,19 @@
             // ============================================================
             // MAPEO DE TECLAS
             // ============================================================
-            const keyMap = {
-                '1': { key: '1', code: 'Digit1', keyCode: 49 },
-                '2': { key: '2', code: 'Digit2', keyCode: 50 },
-                '3': { key: '3', code: 'Digit3', keyCode: 51 },
-                '4': { key: '4', code: 'Digit4', keyCode: 52 },
-                '5': { key: '5', code: 'Digit5', keyCode: 53 },
-                'o': { key: 'o', code: 'KeyO', keyCode: 79 },
-                'p': { key: 'p', code: 'KeyP', keyCode: 80 },
-                'q': { key: 'q', code: 'KeyQ', keyCode: 81 },
-                'a': { key: 'a', code: 'KeyA', keyCode: 65 },
-                'Space': { key: ' ', code: 'Space', keyCode: 32 },
-                'Enter': { key: 'Enter', code: 'Enter', keyCode: 13 }
-            };
+        const keyMap = {
+    '1': { key: '1', code: 'Digit1', keyCode: 49 },
+    '2': { key: '2', code: 'Digit2', keyCode: 50 },
+    '3': { key: '3', code: 'Digit3', keyCode: 51 },
+    '4': { key: '4', code: 'Digit4', keyCode: 52 },
+    '5': { key: '5', code: 'Digit5', keyCode: 53 },
+    'q': { key: 'q', code: 'KeyQ', keyCode: 81 },
+    'w': { key: 'w', code: 'KeyW', keyCode: 87 },
+    'e': { key: 'e', code: 'KeyE', keyCode: 69 },
+    'r': { key: 'r', code: 'KeyR', keyCode: 82 },
+    't': { key: 't', code: 'KeyT', keyCode: 84 },
+    'Enter': { key: 'Enter', code: 'Enter', keyCode: 13 }
+};
 
             function sendGamepadKey(keyName, isDown) {
                 const canvas = getCanvas();
