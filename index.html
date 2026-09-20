@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ZX Spectrum - Juegos</title>
+    <title>Pssst - ZX Spectrum</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -11,8 +11,8 @@
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             min-height: 100vh; overflow-x: hidden; touch-action: none;
         }
-        #game-header { width: 100%; max-width: 600px; text-align: center; padding: 5px; background: #111; border-bottom: 2px solid #f0c040; }
-        #game-header h1 { font-size: 1.1em; color: #f0c040; margin: 0; }
+        #game-header { width: 100%; max-width: 600px; text-align: center; padding: 5px; background: #111; border-bottom: 2px solid #4caf50; }
+        #game-header h1 { font-size: 1.1em; color: #4caf50; margin: 0; }
         #status { font-size: 0.75em; color: #aaa; margin: 5px 0; min-height: 1.2em; padding: 0 5px; }
 
         .game-selector {
@@ -24,15 +24,15 @@
             padding: 8px 14px; border-radius: 6px; font-size: 0.85em;
             cursor: pointer; user-select: none; font-weight: bold;
         }
-        .game-btn.active { background: #f0c040; color: #000; border-color: #f0c040; }
-        .game-btn:active { background: #a08020; }
+        .game-btn.active { background: #4caf50; color: #000; border-color: #4caf50; }
+        .game-btn:active { background: #2e7d32; }
 
         .upload-btn {
-            display: inline-block; background: #333; border: 1px solid #f0c040;
-            padding: 6px 15px; border-radius: 5px; font-size: 0.8em; color: #f0c040; margin: 3px;
+            display: inline-block; background: #333; border: 1px solid #4caf50;
+            padding: 6px 15px; border-radius: 5px; font-size: 0.8em; color: #4caf50; margin: 3px;
             cursor: pointer; user-select: none;
         }
-        .upload-btn:active { background: #f0c040; color: #000; }
+        .upload-btn:active { background: #4caf50; color: #000; }
         #manual-load { display: none; }
 
         #emulator-container {
@@ -55,13 +55,13 @@
             display: flex; justify-content: center; align-items: center; font-size: 1.2em;
             user-select: none; -webkit-user-select: none; font-weight: bold; cursor: pointer;
         }
-        .btn:active, .btn.active { background: #f0c040 !important; color: #000 !important; }
+        .btn:active, .btn.active { background: #4caf50 !important; color: #000 !important; }
         #btn-up { grid-column: 2; grid-row: 1; }
         #btn-left { grid-column: 1; grid-row: 2; }
         #btn-down { grid-column: 2; grid-row: 2; }
         #btn-right { grid-column: 3; grid-row: 2; }
         .btn-action { width: 80px; height: 80px; border-radius: 50%; background: #a93226; border: 3px solid #e6b0aa; }
-        .btn-action:active, .btn-action.active { background: #f0c040 !important; }
+        .btn-action:active, .btn-action.active { background: #4caf50 !important; }
         #btn-up { background-image: url('up.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
         #btn-down { background-image: url('dwn.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
         #btn-left { background-image: url('lft.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
@@ -71,14 +71,11 @@
 <body>
 
     <div id="game-header">
-        <h1 id="game-title">Panama Joe</h1>
+        <h1 id="game-title">Pssst</h1>
         <div id="status">Iniciando emulador...</div>
     </div>
 
-    <!-- SELECTOR DE JUEGOS -->
     <div class="game-selector">
-        <div class="game-btn active" data-game="panamajoe" data-name="Panama Joe">🎮 Panama Joe</div>
-        <div class="game-btn" data-game="pssst" data-name="Pssst">🐛 Pssst</div>
         <label for="manual-load" class="upload-btn">📂 ROM manual</label>
         <span id="btn-retry" class="upload-btn">▶ Reintentar LOAD ""</span>
         <input type="file" id="manual-load" accept=".tap">
@@ -99,12 +96,14 @@
         </div>
         <div class="game-controls">
             <div class="d-pad">
+                <!-- Teclas corregidas: Q=arriba, A=abajo, O=izquierda, P=derecha -->
                 <div id="btn-up" class="btn" data-key="q">↑</div>
-                <div id="btn-left" class="btn" data-key="p">←</div>
+                <div id="btn-left" class="btn" data-key="o">←</div>
                 <div id="btn-down" class="btn" data-key="a">↓</div>
-                <div id="btn-right" class="btn" data-key="o">→</div>
+                <div id="btn-right" class="btn" data-key="p">→</div>
             </div>
-            <div id="btn-jump" class="btn btn-action" data-key="0">SALTO</div>
+            <!-- Disparo = Space -->
+            <div id="btn-jump" class="btn btn-action" data-key="Space">DISPARO</div>
         </div>
     </div>
 
@@ -115,9 +114,7 @@
             const statusEl = document.getElementById('status');
             const manualLoadInput = document.getElementById('manual-load');
             const btnRetry = document.getElementById('btn-retry');
-            const gameTitle = document.getElementById('game-title');
 
-            let currentGame = 'panamajoe';
             let tapeLoaded = false;
             let typing = false;
 
@@ -138,9 +135,6 @@
                 return document.querySelector('#jsspeccy canvas');
             }
 
-            // ============================================================
-            // CARGA DE CINTA con drag & drop simulado
-            // ============================================================
             async function loadTape(blob, filename) {
                 console.log('[TAPE] Cargando:', filename, blob.size, 'bytes');
                 try {
@@ -154,7 +148,6 @@
                     const canvas = getCanvas();
                     if (canvas) canvas.dispatchEvent(dropEvent);
                     document.dispatchEvent(dropEvent);
-
                     tapeLoaded = true;
                     setStatus('✅ Cinta insertada: ' + filename);
                     return true;
@@ -165,9 +158,6 @@
                 }
             }
 
-            // ============================================================
-            // TECLADO
-            // ============================================================
             function pressKey(key, code, keyCode, extraOpts) {
                 const canvas = getCanvas();
                 if (!canvas) return;
@@ -243,64 +233,33 @@
                 typing = false;
             }
 
-            // ============================================================
-            // CARGA DE UN JUEGO (con reset previo)
-            // ============================================================
-            async function loadGame(gameFile) {
-                // 1. Resetear el emulador para limpiar memoria
+            async function loadGame() {
                 if (typeof speccy.reset === 'function') {
-                    try {
-                        speccy.reset();
-                        console.log('[RESET] Emulador reseteado');
-                    } catch(e) { console.warn('[RESET]', e); }
+                    try { speccy.reset(); } catch(e) {}
                 }
                 tapeLoaded = false;
                 await sleep(1500);
 
-                // 2. Descargar el .tap
-                setStatus('Descargando ' + gameFile + '.tap...');
+                setStatus('Descargando pssst.tap...');
                 try {
-                    const r = await fetch(gameFile + '.tap?t=' + Date.now());
+                    const r = await fetch('pssst.tap?t=' + Date.now());
                     if (!r.ok) throw new Error('HTTP ' + r.status);
                     const blob = await r.blob();
-                    await loadTape(blob, gameFile + '.tap');
+                    await loadTape(blob, 'pssst.tap');
                     await sleep(2000);
                     await typeLoadCommand();
                 } catch (err) {
                     console.error('[FETCH]', err);
-                    setStatus('❌ Error cargando ' + gameFile + '.tap: ' + err.message);
+                    setStatus('❌ Error: ' + err.message);
                 }
             }
 
-            // ============================================================
-            // SELECTOR DE JUEGOS
-            // ============================================================
-            document.querySelectorAll('.game-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if (typing) return;
-                    const gameId = btn.getAttribute('data-game');
-                    const gameName = btn.getAttribute('data-name');
-                    if (gameId === currentGame) return;
-
-                    // Actualizar UI
-                    document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentGame = gameId;
-                    gameTitle.textContent = gameName;
-
-                    // Cargar el nuevo juego
-                    loadGame(gameId);
-                });
-            });
-
-            // Arrancar con el primer juego
             let tries = 0;
             const interval = setInterval(() => {
                 tries++;
                 if (getCanvas()) {
                     clearInterval(interval);
-                    console.log('[OK] Canvas listo tras ' + tries + ' intentos');
-                    setTimeout(() => loadGame(currentGame), 800);
+                    setTimeout(() => loadGame(), 800);
                 }
                 if (tries > 50) {
                     clearInterval(interval);
@@ -308,9 +267,6 @@
                 }
             }, 200);
 
-            // ============================================================
-            // BOTONES MANUALES
-            // ============================================================
             manualLoadInput.addEventListener('change', async function(event) {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -333,12 +289,14 @@
             });
 
             // ============================================================
-            // GAMEPAD
+            // MAPEO DE TECLAS DE PSSST (CORREGIDO)
+            // O = izquierda, P = derecha, Q = arriba, A = abajo
+            // Space = disparar, Caps Shift = pausa
             // ============================================================
             const keyMap = {
                 '1':'1', '2':'2', '3':'3', '4':'4', '5':'5',
-                'q':'q', 'p':'p', 'a':'a', 'o':'o', '0':'0',
-                'Enter':'Enter'
+                'o':'o', 'p':'p', 'q':'q', 'a':'a',
+                'Space':' ', 'Enter':'Enter'
             };
 
             function sendGamepadKey(key, isDown) {
@@ -348,9 +306,11 @@
                 const actualKey = keyMap[key] || key;
                 let keyCode = actualKey.charCodeAt(0);
                 if (key === 'Enter') keyCode = 13;
+                if (key === 'Space' || actualKey === ' ') keyCode = 32;
 
                 const evt = new KeyboardEvent(isDown ? 'keydown' : 'keyup', {
-                    key: actualKey, code: 'Digit' + actualKey,
+                    key: actualKey,
+                    code: key === 'Space' ? 'Space' : (key === 'Enter' ? 'Enter' : 'Key' + actualKey.toUpperCase()),
                     keyCode: keyCode, which: keyCode,
                     bubbles: true, cancelable: true
                 });
@@ -361,6 +321,7 @@
 
             document.querySelectorAll('.btn').forEach(btn => {
                 const key = btn.getAttribute('data-key');
+                if (!key) return;
                 let touchHandled = false;
 
                 btn.addEventListener('touchstart', (e) => {
