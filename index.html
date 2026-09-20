@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ZX Spectrum - Juegos</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Arial, sans-serif; background: #050505; color: #fff;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            min-height: 100vh; overflow-x: hidden; touch-action: none;
+        }
+        #game-header { width: 100%; max-width: 600px; text-align: center; padding: 5px; background: #111; border-bottom: 2px solid #f0c040; }
+        #game-header h1 { font-size: 1.1em; color: #f0c040; margin: 0; }
+        #status { font-size: 0.75em; color: #aaa; margin: 5px 0; min-height: 1.2em; padding: 0 5px; }
+
+        .game-selector {
+            display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;
+            padding: 6px 5px; background: #0a0a14;
+        }
+        .game-btn {
+            background: #222; border: 2px solid #555; color: #ccc;
+            padding: 8px 14px; border-radius: 6px; font-size: 0.85em;
+            cursor: pointer; user-select: none; font-weight: bold;
+        }
+        .game-btn.active { background: #f0c040; color: #000; border-color: #f0c040; }
+        .game-btn:active { background: #a08020; }
+
+        .upload-btn {
+            display: inline-block; background: #333; border: 1px solid #f0c040;
+            padding: 6px 15px; border-radius: 5px; font-size: 0.8em; color: #f0c040; margin: 3px;
+            cursor: pointer; user-select: none;
+        }
+        .upload-btn:active { background: #f0c040; color: #000; }
+        #manual-load { display: none; }
+
+        #emulator-container {
+            width: 100%; max-width: 600px; background: #000; padding: 2px;
+            margin-bottom: 5px;
+        }
+        #jsspeccy { width: 100%; aspect-ratio: 4/3; border: 2px solid #333; }
+        #jsspeccy canvas { width: 100% !important; height: 100% !important; image-rendering: pixelated; outline: none; }
+
+        #gamepad-area {
+            width: 100%; max-width: 600px; background: #1a1a2e;
+            border-radius: 8px; padding: 10px; border: 1px solid #333;
+        }
+        .menu-keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 15px; }
+        .menu-keys .btn { height: 40px; font-size: 1em; background: #2a2a3e; border: 1px solid #555; }
+        .game-controls { display: flex; justify-content: space-around; align-items: center; }
+        .d-pad { display: grid; grid-template-columns: 60px 60px 60px; grid-template-rows: 60px 60px; gap: 5px; }
+        .btn {
+            background: #333; border: 2px solid #555; border-radius: 8px; color: #fff;
+            display: flex; justify-content: center; align-items: center; font-size: 1.2em;
+            user-select: none; -webkit-user-select: none; font-weight: bold; cursor: pointer;
+        }
+        .btn:active, .btn.active { background: #f0c040 !important; color: #000 !important; }
+        #btn-up { grid-column: 2; grid-row: 1; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-down { grid-column: 2; grid-row: 2; }
+        #btn-right { grid-column: 3; grid-row: 2; }
+        .btn-action { width: 80px; height: 80px; border-radius: 50%; background: #a93226; border: 3px solid #e6b0aa; }
+        .btn-action:active, .btn-action.active { background: #f0c040 !important; }
+        #btn-up { background-image: url('up.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
+        #btn-down { background-image: url('dwn.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
+        #btn-left { background-image: url('lft.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
+        #btn-right { background-image: url('rgt.png'); background-size: 30px; background-repeat: no-repeat; background-position: center; color: transparent; }
+    </style>
+</head>
+<body>
+
+    <div id="game-header">
+        <h1 id="game-title">Panama Joe</h1>
+        <div id="status">Iniciando emulador...</div>
+    </div>
+
+    <!-- SELECTOR DE JUEGOS -->
+    <div class="game-selector">
+        <div class="game-btn active" data-game="panamajoe" data-name="Panama Joe">🎮 Panama Joe</div>
+        <div class="game-btn" data-game="pssst" data-name="Pssst">🐛 Pssst</div>
+        <label for="manual-load" class="upload-btn">📂 ROM manual</label>
+        <span id="btn-retry" class="upload-btn">▶ Reintentar LOAD ""</span>
+        <input type="file" id="manual-load" accept=".tap">
+    </div>
+
+    <div id="emulator-container">
+        <div id="jsspeccy"></div>
+    </div>
+
+    <div id="gamepad-area">
+        <div class="menu-keys">
+            <div class="btn" data-key="1">1</div>
+            <div class="btn" data-key="2">2</div>
+            <div class="btn" data-key="3">3</div>
+            <div class="btn" data-key="4">4</div>
+            <div class="btn" data-key="5">5</div>
+            <div class="btn" data-key="Enter">ENT</div>
+        </div>
+        <div class="game-controls">
+            <div class="d-pad">
+                <div id="btn-up" class="btn" data-key="9">↑</div>
+                <div id="btn-left" class="btn" data-key="6">←</div>
+                <div id="btn-down" class="btn" data-key="8">↓</div>
+                <div id="btn-right" class="btn" data-key="7">→</div>
+            </div>
+            <div id="btn-jump" class="btn btn-action" data-key="0">SALTO</div>
+        </div>
+    </div>
+
+    <script src="jsspeccy/jsspeccy.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusEl = document.getElementById('status');
+            const manualLoadInput = document.getElementById('manual-load');
+            const btnRetry = document.getElementById('btn-retry');
+            const gameTitle = document.getElementById('game-title');
+
+            let currentGame = 'panamajoe';
+            let tapeLoaded = false;
+            let typing = false;
+
+            function setStatus(msg) {
+                statusEl.textContent = msg;
+                console.log('[STATUS]', msg);
+            }
+            const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+            const speccy = JSSpeccy(document.getElementById('jsspeccy'), {
+                autoStart: true,
+                sandbox: false,
+                machine: 48,
+                zoom: 1
+            });
+
+            function getCanvas() {
+                return document.querySelector('#jsspeccy canvas');
+            }
+
+            // ============================================================
+            // CARGA DE CINTA con drag & drop simulado
+            // ============================================================
+            async function loadTape(blob, filename) {
+                console.log('[TAPE] Cargando:', filename, blob.size, 'bytes');
+                try {
+                    const file = new File([blob], filename, { type: 'application/octet-stream' });
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    const dropEvent = new DragEvent('drop', {
+                        bubbles: true, cancelable: true, dataTransfer: dt
+                    });
+                    document.getElementById('jsspeccy').dispatchEvent(dropEvent);
+                    const canvas = getCanvas();
+                    if (canvas) canvas.dispatchEvent(dropEvent);
+                    document.dispatchEvent(dropEvent);
+
+                    tapeLoaded = true;
+                    setStatus('✅ Cinta insertada: ' + filename);
+                    return true;
+                } catch (err) {
+                    console.error('[TAPE ERROR]', err);
+                    setStatus('❌ Error: ' + err.message);
+                    return false;
+                }
+            }
+
+            // ============================================================
+            // TECLADO
+            // ============================================================
+            function pressKey(key, code, keyCode, extraOpts) {
+                const canvas = getCanvas();
+                if (!canvas) return;
+                const opts = Object.assign({
+                    key: key, code: code, keyCode: keyCode, which: keyCode,
+                    bubbles: true, cancelable: true
+                }, extraOpts || {});
+
+                const down = new KeyboardEvent('keydown', opts);
+                const up = new KeyboardEvent('keyup', opts);
+
+                Object.defineProperty(down, 'keyCode', { get: () => keyCode });
+                Object.defineProperty(down, 'which', { get: () => keyCode });
+                Object.defineProperty(up, 'keyCode', { get: () => keyCode });
+                Object.defineProperty(up, 'which', { get: () => keyCode });
+
+                canvas.dispatchEvent(down);
+                document.dispatchEvent(down);
+                setTimeout(() => {
+                    canvas.dispatchEvent(up);
+                    document.dispatchEvent(up);
+                }, 60);
+            }
+
+            async function pressSymbolShift(letter, code, keyCode) {
+                const canvas = getCanvas();
+                if (!canvas) return;
+                const ssDown = new KeyboardEvent('keydown', {
+                    key: 'Control', code: 'ControlLeft', keyCode: 17, which: 17,
+                    ctrlKey: true, bubbles: true, cancelable: true
+                });
+                Object.defineProperty(ssDown, 'keyCode', { get: () => 17 });
+                Object.defineProperty(ssDown, 'which', { get: () => 17 });
+                canvas.dispatchEvent(ssDown);
+                document.dispatchEvent(ssDown);
+                await sleep(120);
+
+                pressKey(letter, code, keyCode, { ctrlKey: true });
+                await sleep(150);
+
+                const ssUp = new KeyboardEvent('keyup', {
+                    key: 'Control', code: 'ControlLeft', keyCode: 17, which: 17,
+                    ctrlKey: false, bubbles: true, cancelable: true
+                });
+                Object.defineProperty(ssUp, 'keyCode', { get: () => 17 });
+                Object.defineProperty(ssUp, 'which', { get: () => 17 });
+                canvas.dispatchEvent(ssUp);
+                document.dispatchEvent(ssUp);
+                await sleep(120);
+            }
+
+            async function typeLoadCommand() {
+                if (typing) return;
+                typing = true;
+                setStatus('⌨️ Escribiendo LOAD ""...');
+
+                const canvas = getCanvas();
+                if (!canvas) { typing = false; return; }
+                canvas.focus();
+                await sleep(500);
+
+                pressKey('Enter', 'Enter', 13);
+                await sleep(400);
+                pressKey('j', 'KeyJ', 74);
+                await sleep(400);
+                await pressSymbolShift('p', 'KeyP', 80);
+                await sleep(300);
+                await pressSymbolShift('p', 'KeyP', 80);
+                await sleep(300);
+                pressKey('Enter', 'Enter', 13);
+
+                setStatus('▶ LOAD "" enviado. Espera a que cargue...');
+                typing = false;
+            }
+
+            // ============================================================
+            // CARGA DE UN JUEGO (con reset previo)
+            // ============================================================
+            async function loadGame(gameFile) {
+                // 1. Resetear el emulador para limpiar memoria
+                if (typeof speccy.reset === 'function') {
+                    try {
+                        speccy.reset();
+                        console.log('[RESET] Emulador reseteado');
+                    } catch(e) { console.warn('[RESET]', e); }
+                }
+                tapeLoaded = false;
+                await sleep(1500);
+
+                // 2. Descargar el .tap
+                setStatus('Descargando ' + gameFile + '.tap...');
+                try {
+                    const r = await fetch(gameFile + '.tap?t=' + Date.now());
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    const blob = await r.blob();
+                    await loadTape(blob, gameFile + '.tap');
+                    await sleep(2000);
+                    await typeLoadCommand();
+                } catch (err) {
+                    console.error('[FETCH]', err);
+                    setStatus('❌ Error cargando ' + gameFile + '.tap: ' + err.message);
+                }
+            }
+
+            // ============================================================
+            // SELECTOR DE JUEGOS
+            // ============================================================
+            document.querySelectorAll('.game-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (typing) return;
+                    const gameId = btn.getAttribute('data-game');
+                    const gameName = btn.getAttribute('data-name');
+                    if (gameId === currentGame) return;
+
+                    // Actualizar UI
+                    document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentGame = gameId;
+                    gameTitle.textContent = gameName;
+
+                    // Cargar el nuevo juego
+                    loadGame(gameId);
+                });
+            });
+
+            // Arrancar con el primer juego
+            let tries = 0;
+            const interval = setInterval(() => {
+                tries++;
+                if (getCanvas()) {
+                    clearInterval(interval);
+                    console.log('[OK] Canvas listo tras ' + tries + ' intentos');
+                    setTimeout(() => loadGame(currentGame), 800);
+                }
+                if (tries > 50) {
+                    clearInterval(interval);
+                    setStatus('⚠️ Canvas no detectado.');
+                }
+            }, 200);
+
+            // ============================================================
+            // BOTONES MANUALES
+            // ============================================================
+            manualLoadInput.addEventListener('change', async function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                setStatus('Insertando: ' + file.name);
+                const blob = file.slice(0, file.size, 'application/octet-stream');
+                await loadTape(blob, file.name);
+                await sleep(2000);
+                await typeLoadCommand();
+            });
+
+            btnRetry.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typing) return;
+                if (!tapeLoaded) {
+                    setStatus('Cinta no cargada. Espera o usa carga manual.');
+                    return;
+                }
+                typeLoadCommand();
+            });
+
+            // ============================================================
+            // GAMEPAD
+            // ============================================================
+            const keyMap = {
+                '1':'1', '2':'2', '3':'3', '4':'4', '5':'5',
+                '6':'6', '7':'7', '8':'8', '9':'9', '0':'0',
+                'Enter':'Enter'
+            };
+
+            function sendGamepadKey(key, isDown) {
+                const canvas = getCanvas();
+                if (!canvas) return;
+                canvas.focus();
+                const actualKey = keyMap[key] || key;
+                let keyCode = actualKey.charCodeAt(0);
+                if (key === 'Enter') keyCode = 13;
+
+                const evt = new KeyboardEvent(isDown ? 'keydown' : 'keyup', {
+                    key: actualKey, code: 'Digit' + actualKey,
+                    keyCode: keyCode, which: keyCode,
+                    bubbles: true, cancelable: true
+                });
+                Object.defineProperty(evt, 'keyCode', { get: () => keyCode });
+                Object.defineProperty(evt, 'which', { get: () => keyCode });
+                canvas.dispatchEvent(evt);
+            }
+
+            document.querySelectorAll('.btn').forEach(btn => {
+                const key = btn.getAttribute('data-key');
+                let touchHandled = false;
+
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    touchHandled = true;
+                    btn.classList.add('active');
+                    sendGamepadKey(key, true);
+                }, { passive: false });
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    btn.classList.remove('active');
+                    sendGamepadKey(key, false);
+                    setTimeout(() => { touchHandled = false; }, 300);
+                }, { passive: false });
+                btn.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    btn.classList.remove('active');
+                    sendGamepadKey(key, false);
+                }, { passive: false });
+                btn.addEventListener('mousedown', (e) => {
+                    if (touchHandled) return;
+                    e.preventDefault();
+                    btn.classList.add('active');
+                    sendGamepadKey(key, true);
+                });
+                btn.addEventListener('mouseup', (e) => {
+                    if (touchHandled) return;
+                    e.preventDefault();
+                    btn.classList.remove('active');
+                    sendGamepadKey(key, false);
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.classList.remove('active');
+                });
+            });
+
+            window.addEventListener('contextmenu', e => e.preventDefault());
+        });
+    </script>
+</body>
+</html>
